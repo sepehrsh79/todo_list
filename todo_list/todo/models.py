@@ -4,10 +4,19 @@ from todo_list.common.models import BaseModel
 from todo_list.users.models import BaseUser
 
 
+class Group(BaseModel):
+    name = models.CharField(max_length=255)
+    user = models.ForeignKey(BaseUser, on_delete=models.CASCADE, related_name="boards")
+
+    def __str__(self):
+        return self.name
+
+
 class Board(BaseModel):
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
-    user = models.ForeignKey(BaseUser, on_delete=models.CASCADE, related_name="boards")
+    user = models.ForeignKey(BaseUser, on_delete=models.CASCADE, related_name="user_boards")
+    group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name="group_boards")
 
     def __str__(self):
         return self.name
@@ -19,6 +28,8 @@ class Task(BaseModel):
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
     completed = models.BooleanField(default=False)
+
+    # Todo: deadline and committed users
 
     def __str__(self):
         return self.title
