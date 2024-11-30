@@ -22,11 +22,11 @@ class TaskAPIView(ApiAuthMixin, APIView):
     class Pagination(LimitOffsetPagination):
         default_limit = 10
 
-    class InputSerializer(serializers.Serializer):
+    class TaskInputSerializer(serializers.Serializer):
         title = serializers.CharField(max_length=100)
         description = serializers.CharField(allow_blank=True)
 
-    class OutPutSerializer(serializers.ModelSerializer):
+    class TaskOutPutSerializer(serializers.ModelSerializer):
         user = serializers.SerializerMethodField("get_user")
         board = serializers.SerializerMethodField("get_group")
 
@@ -43,11 +43,11 @@ class TaskAPIView(ApiAuthMixin, APIView):
     @extend_schema(
         tags=['Tasks'],
         description='More descriptive text',
-        responses=OutPutSerializer,
-        request=InputSerializer,
+        responses=TaskOutPutSerializer,
+        request=TaskInputSerializer,
     )
     def post(self, request, board_id):
-        serializer = self.InputSerializer(data=request.data)
+        serializer = self.TaskInputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         board = get_object_or_404(Board, id=board_id)
         task = create_task(
@@ -56,18 +56,18 @@ class TaskAPIView(ApiAuthMixin, APIView):
             board=board,
             user=request.user,
         )
-        return Response(self.OutPutSerializer(task, context={"request": request}).data)
+        return Response(self.TaskOutPutSerializer(task, context={"request": request}).data)
 
     @extend_schema(
         tags=['Tasks'],
-        responses=OutPutSerializer,
+        responses=TaskOutPutSerializer,
     )
     def get(self, request, board_id):
         query = task_list(board_id=board_id)
 
         return get_paginated_response_context(
             pagination_class=self.Pagination,
-            serializer_class=self.OutPutSerializer,
+            serializer_class=self.TaskOutPutSerializer,
             queryset=query,
             request=request,
             view=self,
@@ -77,7 +77,7 @@ class TaskAPIView(ApiAuthMixin, APIView):
 class TaskDetailAPIView(ApiAuthMixin, APIView):
     permission_classes = [IsAuthenticated]
 
-    class InputDetailSerializer(serializers.Serializer):
+    class TaskDetailInputSerializer(serializers.Serializer):
         title = serializers.CharField(max_length=100)
         description = serializers.CharField(allow_blank=True)
         board = serializers.IntegerField()
@@ -87,7 +87,7 @@ class TaskDetailAPIView(ApiAuthMixin, APIView):
                 return board_id
             raise serializers.ValidationError("Board not found!")
 
-    class OutPutDetailSerializer(serializers.ModelSerializer):
+    class TaskDetailOutPutSerializer(serializers.ModelSerializer):
         user = serializers.SerializerMethodField("get_user")
         board = serializers.SerializerMethodField("get_group")
 
@@ -103,21 +103,21 @@ class TaskDetailAPIView(ApiAuthMixin, APIView):
 
     @extend_schema(
         tags=['Tasks'],
-        responses=OutPutDetailSerializer,
+        responses=TaskDetailOutPutSerializer,
     )
     def get(self, request, id):
         task = task_detail(id=id)
-        serializer = self.OutPutSerializer(task)
+        serializer = self.TaskDetailOutPutSerializer(task)
         return Response(serializer.data)
 
     @extend_schema(
         tags=['Tasks'],
-        request=InputDetailSerializer,
-        responses=OutPutDetailSerializer,
+        request=TaskDetailInputSerializer,
+        responses=TaskDetailOutPutSerializer,
     )
     def put(self, request, id):
         task = task_detail(id=id)
-        serializer = self.InputSerializer(task, data=request.data)
+        serializer = self.TaskDetailInputSerializer(task, data=request.data)
         serializer.is_valid(raise_exception=True)
         update_task(task=task, **serializer.validated_data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -130,6 +130,6 @@ class TaskDetailAPIView(ApiAuthMixin, APIView):
         task = task_detail(id=id)
         delete_task(task=task)
         return Response(
-            {"message": "Group deleted successfully."},
+            {"message": "Task deleted successfully."},
             status=status.HTTP_204_NO_CONTENT,
         )

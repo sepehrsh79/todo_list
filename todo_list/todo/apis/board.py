@@ -21,11 +21,11 @@ class BoardAPIView(ApiAuthMixin, APIView):
     class Pagination(LimitOffsetPagination):
         default_limit = 10
 
-    class InputSerializer(serializers.Serializer):
+    class BoardInputSerializer(serializers.Serializer):
         name = serializers.CharField(max_length=100)
         description = serializers.CharField(allow_blank=True)
 
-    class OutPutSerializer(serializers.ModelSerializer):
+    class BoardOutPutSerializer(serializers.ModelSerializer):
         user = serializers.SerializerMethodField("get_user")
         group = serializers.SerializerMethodField("get_group")
 
@@ -41,11 +41,11 @@ class BoardAPIView(ApiAuthMixin, APIView):
 
     @extend_schema(
         tags=['Boards'],
-        responses=OutPutSerializer,
-        request=InputSerializer,
+        responses=BoardOutPutSerializer,
+        request=BoardInputSerializer,
     )
     def post(self, request, group_id):
-        serializer = self.InputSerializer(data=request.data)
+        serializer = self.BoardInputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         group = get_object_or_404(Group, id=group_id)
         board = create_board(
@@ -54,18 +54,18 @@ class BoardAPIView(ApiAuthMixin, APIView):
             group=group,
             user=request.user,
         )
-        return Response(self.OutPutSerializer(board, context={"request": request}).data)
+        return Response(self.BoardOutPutSerializer(board, context={"request": request}).data)
 
     @extend_schema(
         tags=['Boards'],
-        responses=OutPutSerializer,
+        responses=BoardOutPutSerializer,
     )
     def get(self, request, group_id):
         query = board_list(group_id=group_id)
 
         return get_paginated_response_context(
             pagination_class=self.Pagination,
-            serializer_class=self.OutPutSerializer,
+            serializer_class=self.BoardOutPutSerializer,
             queryset=query,
             request=request,
             view=self,
@@ -75,7 +75,7 @@ class BoardAPIView(ApiAuthMixin, APIView):
 class BoardDetailAPIView(ApiAuthMixin, APIView):
     permission_classes = [IsAuthenticated]
 
-    class InputDetailSerializer(serializers.Serializer):
+    class BoardDetailInputSerializer(serializers.Serializer):
         name = serializers.CharField(max_length=100)
         description = serializers.CharField(allow_blank=True)
         group = serializers.IntegerField()
@@ -85,7 +85,7 @@ class BoardDetailAPIView(ApiAuthMixin, APIView):
                 return group_id
             raise serializers.ValidationError("Group not found!")
 
-    class OutPutDetailSerializer(serializers.ModelSerializer):
+    class BoardDetailOutPutSerializer(serializers.ModelSerializer):
         user = serializers.SerializerMethodField("get_user")
         group = serializers.SerializerMethodField("get_group")
 
@@ -101,21 +101,21 @@ class BoardDetailAPIView(ApiAuthMixin, APIView):
 
     @extend_schema(
         tags=['Boards'],
-        responses=OutPutDetailSerializer,
+        responses=BoardDetailOutPutSerializer,
     )
     def get(self, request, id):
         board = board_detail(id=id)
-        serializer = self.OutPutSerializer(board)
+        serializer = self.BoardDetailOutPutSerializer(board)
         return Response(serializer.data)
 
     @extend_schema(
         tags=['Boards'],
-        request=InputDetailSerializer,
-        responses=OutPutDetailSerializer,
+        request=BoardDetailInputSerializer,
+        responses=BoardDetailOutPutSerializer,
     )
     def put(self, request, id):
         board = board_detail(id=id)
-        serializer = self.InputSerializer(board, data=request.data)
+        serializer = self.BoardDetailInputSerializer(board, data=request.data)
         serializer.is_valid(raise_exception=True)
         update_board(board=board, **serializer.validated_data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
