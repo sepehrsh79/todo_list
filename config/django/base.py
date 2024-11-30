@@ -18,6 +18,7 @@ LOCAL_APPS = [
     'todo_list.common.apps.CommonConfig',
     'todo_list.users.apps.UsersConfig',
     'todo_list.authentication.apps.AuthenticationConfig',
+    'todo_list.todo.apps.TodoConfig',
 ]
 
 THIRD_PARTY_APPS = [
