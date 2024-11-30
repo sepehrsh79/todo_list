@@ -25,6 +25,7 @@ class TaskAPIView(ApiAuthMixin, APIView):
     class TaskInputSerializer(serializers.Serializer):
         title = serializers.CharField(max_length=100)
         description = serializers.CharField(allow_blank=True)
+        deadline = serializers.DateField(required=False)
 
     class TaskOutPutSerializer(serializers.ModelSerializer):
         user = serializers.SerializerMethodField("get_user")
@@ -32,7 +33,7 @@ class TaskAPIView(ApiAuthMixin, APIView):
 
         class Meta:
             model = Task
-            fields = ["id", "title", "description", "board", "user", "created_at", "updated_at"]
+            fields = ["id", "title", "description", "board", "user", "deadline", "created_at", "updated_at"]
 
         def get_user(self, task):
             return task.user.email
@@ -53,6 +54,7 @@ class TaskAPIView(ApiAuthMixin, APIView):
         task = create_task(
             title=serializer.validated_data.get("name"),
             description=serializer.validated_data.get("description"),
+            deadline=serializer.validated_data.get("deadline"),
             board=board,
             user=request.user,
         )
@@ -81,6 +83,7 @@ class TaskDetailAPIView(ApiAuthMixin, APIView):
         title = serializers.CharField(max_length=100)
         description = serializers.CharField(allow_blank=True)
         board = serializers.IntegerField()
+        deadline = serializers.DateField(required=False)
 
         def validate_board(self, board_id):
             if Board.objects.filter(id=board_id).exists():
@@ -93,7 +96,7 @@ class TaskDetailAPIView(ApiAuthMixin, APIView):
 
         class Meta:
             model = Task
-            fields = ["id", "title", "description", "board", "user", "created_at", "updated_at"]
+            fields = ["id", "title", "description", "board", "user", "deadline", "created_at", "updated_at"]
 
         def get_user(self, task):
             return task.user.email

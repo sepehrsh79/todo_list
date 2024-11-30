@@ -28,8 +28,7 @@ class Task(BaseModel):
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
     completed = models.BooleanField(default=False)
-
-    # Todo: deadline and committed users
+    deadline = models.DateField(blank=True, null=True)
 
     def __str__(self):
         return self.title
