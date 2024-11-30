@@ -95,10 +95,11 @@ class GroupDetailAPIView(ApiAuthMixin, APIView):
     )
     def put(self, request, group_id):
         group = group_detail(id=group_id)
-        serializer = self.GroupDetailInputSerializer(group, data=request.data)
+        serializer = self.GroupDetailInputSerializer(group, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
-        update_group(group=group, **serializer.validated_data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        group = update_group(group=group, **serializer.validated_data)
+        serializer = self.GroupDetailOutPutSerializer(group)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @extend_schema(
         tags=['Groups'],
@@ -109,5 +110,5 @@ class GroupDetailAPIView(ApiAuthMixin, APIView):
         delete_group(group=group)
         return Response(
             {"message": "Group deleted successfully."},
-            status=status.HTTP_204_NO_CONTENT,
+            status=status.HTTP_200_OK,
         )
