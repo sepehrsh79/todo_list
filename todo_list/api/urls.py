@@ -1,5 +1,6 @@
 from django.urls import path, include
 
 urlpatterns = [
-    path('example/', include(('todo_list.example.urls', 'example')))
+    path('todo/', include(('todo_list.todo.urls', 'todo'))),
+    path('auth/', include(('todo_list.authentication.urls', 'auth')))
 ]
