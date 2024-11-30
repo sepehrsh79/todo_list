@@ -13,6 +13,7 @@ from todo_list.todo.models import Board, Group
 from todo_list.todo.selectors.board import board_list, board_detail
 from todo_list.todo.services.board import create_board, update_board, delete_board
 from todo_list.api.mixins import ApiAuthMixin
+from todo_list.users.nested_serializers import PermittedUsersSerializer
 
 
 class BoardAPIView(ApiAuthMixin, APIView):
@@ -24,14 +25,20 @@ class BoardAPIView(ApiAuthMixin, APIView):
     class BoardInputSerializer(serializers.Serializer):
         name = serializers.CharField(max_length=100)
         description = serializers.CharField(allow_blank=True)
+        permitted_users = serializers.ListField(
+            default=[],
+            child=serializers.IntegerField(),
+            allow_empty=True
+        )
 
     class BoardOutPutSerializer(serializers.ModelSerializer):
         user = serializers.SerializerMethodField("get_user")
         group = serializers.SerializerMethodField("get_group")
+        permitted_users = PermittedUsersSerializer(many=True)
 
         class Meta:
             model = Board
-            fields = ["id", "name", "description", "group", "user", "created_at", "updated_at"]
+            fields = ["id", "name", "description", "group", "user", "permitted_users", "created_at", "updated_at"]
 
         def get_user(self, board):
             return board.user.email
@@ -51,6 +58,7 @@ class BoardAPIView(ApiAuthMixin, APIView):
         board = create_board(
             name=serializer.validated_data.get("name"),
             description=serializer.validated_data.get("description"),
+            permitted_users=serializer.validated_data.get("permitted_users", []),
             group=group,
             user=request.user,
         )
@@ -79,6 +87,10 @@ class BoardDetailAPIView(ApiAuthMixin, APIView):
         name = serializers.CharField(max_length=100)
         description = serializers.CharField(allow_blank=True)
         group = serializers.IntegerField()
+        permitted_users = serializers.ListField(
+            child=serializers.IntegerField(),
+            allow_empty=True
+        )
 
         def validate_group(self, group_id):
             if Group.objects.filter(id=group_id).exists():
@@ -91,7 +103,7 @@ class BoardDetailAPIView(ApiAuthMixin, APIView):
 
         class Meta:
             model = Board
-            fields = ["id", "name", "description", "group", "user", "created_at", "updated_at"]
+            fields = ["id", "name", "description", "group", "user", "permitted_users", "created_at", "updated_at"]
 
         def get_user(self, board):
             return board.user.email
@@ -103,8 +115,8 @@ class BoardDetailAPIView(ApiAuthMixin, APIView):
         tags=['Boards'],
         responses=BoardDetailOutPutSerializer,
     )
-    def get(self, request, id):
-        board = board_detail(id=id)
+    def get(self, request, board_id):
+        board = board_detail(id=board_id)
         serializer = self.BoardDetailOutPutSerializer(board)
         return Response(serializer.data)
 
@@ -113,21 +125,22 @@ class BoardDetailAPIView(ApiAuthMixin, APIView):
         request=BoardDetailInputSerializer,
         responses=BoardDetailOutPutSerializer,
     )
-    def put(self, request, id):
-        board = board_detail(id=id)
+    def put(self, request, board_id):
+        board = board_detail(id=board_id)
         serializer = self.BoardDetailInputSerializer(board, data=request.data)
         serializer.is_valid(raise_exception=True)
-        update_board(board=board, **serializer.validated_data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        board = update_board(board=board, **serializer.validated_data)
+        serializer = self.BoardDetailOutPutSerializer(board)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @extend_schema(
         tags=['Boards'],
         responses=None,
     )
-    def delete(self, request, id):
-        board = board_detail(id=id)
+    def delete(self, request, board_id):
+        board = board_detail(id=board_id)
         delete_board(board=board)
         return Response(
-            {"message": "Group deleted successfully."},
-            status=status.HTTP_204_NO_CONTENT,
+            {"message": "Board deleted successfully."},
+            status=status.HTTP_200_OK,
         )

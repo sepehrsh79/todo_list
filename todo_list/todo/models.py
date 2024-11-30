@@ -17,6 +17,7 @@ class Board(BaseModel):
     description = models.TextField(blank=True, null=True)
     user = models.ForeignKey(BaseUser, on_delete=models.CASCADE, related_name="user_boards")
     group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name="group_boards")
+    permitted_users = models.ManyToManyField(BaseUser, related_name="permitted_boards", blank=True)
 
     def __str__(self):
         return self.name
