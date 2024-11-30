@@ -5,7 +5,7 @@ from rest_framework import serializers
 
 from django.core.validators import MinLengthValidator
 from .validators import number_validator, special_char_validator, letter_validator
-from todo_list.users.models import BaseUser , Profile
+from todo_list.users.models import BaseUser, Profile
 from todo_list.api.mixins import ApiAuthMixin
 from todo_list.users.selectors import get_profile
 from todo_list.users.services import register 
@@ -28,7 +28,6 @@ class ProfileApi(ApiAuthMixin, APIView):
 
 
 class RegisterApi(APIView):
-
 
     class InputRegisterSerializer(serializers.Serializer):
         email = serializers.EmailField(max_length=255)
@@ -56,7 +55,6 @@ class RegisterApi(APIView):
                 raise serializers.ValidationError("confirm password is not equal to password")
             return data
 
-
     class OutPutRegisterSerializer(serializers.ModelSerializer):
 
         token = serializers.SerializerMethodField("get_token")
@@ -75,7 +73,6 @@ class RegisterApi(APIView):
             data["access"] = str(refresh.access_token)
 
             return data
-
 
     @extend_schema(request=InputRegisterSerializer, responses=OutPutRegisterSerializer)
     def post(self, request):

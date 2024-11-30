@@ -39,7 +39,7 @@ class BaseUserManager(BUM):
 
 class BaseUser(BaseModel, AbstractBaseUser, PermissionsMixin):
 
-    email = models.EmailField(verbose_name = "email address",
+    email = models.EmailField(verbose_name="email address",
                               unique=True)
 
     is_active = models.BooleanField(default=True)
@@ -62,9 +62,3 @@ class Profile(models.Model):
 
     def __str__(self):
         return f"{self.user} >> {self.bio}"
-
-
-
-
-
-
