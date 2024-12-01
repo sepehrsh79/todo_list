@@ -29,7 +29,7 @@ class TaskAPIView(ApiAuthMixin, APIView):
 
     class TaskOutPutSerializer(serializers.ModelSerializer):
         user = serializers.SerializerMethodField("get_user")
-        board = serializers.SerializerMethodField("get_group")
+        board = serializers.SerializerMethodField("get_board")
 
         class Meta:
             model = Task
@@ -42,8 +42,8 @@ class TaskAPIView(ApiAuthMixin, APIView):
             return task.board.name
 
     @extend_schema(
-        tags=['Tasks'],
-        description='More descriptive text',
+        tags=["Tasks"],
+        description="More descriptive text",
         responses=TaskOutPutSerializer,
         request=TaskInputSerializer,
     )
@@ -51,8 +51,13 @@ class TaskAPIView(ApiAuthMixin, APIView):
         serializer = self.TaskInputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         board = get_object_or_404(Board, id=board_id)
+        if board and hasattr(board, "permitted_users"):
+            permitted_users = board.permitted_users.all()
+            if permitted_users and request.user not in permitted_users:
+                return Response({"error": "You are not authorized to add tasks to this board."},
+                                status=status.HTTP_403_FORBIDDEN)
         task = create_task(
-            title=serializer.validated_data.get("name"),
+            title=serializer.validated_data.get("title"),
             description=serializer.validated_data.get("description"),
             deadline=serializer.validated_data.get("deadline"),
             board=board,
@@ -61,7 +66,7 @@ class TaskAPIView(ApiAuthMixin, APIView):
         return Response(self.TaskOutPutSerializer(task, context={"request": request}).data)
 
     @extend_schema(
-        tags=['Tasks'],
+        tags=["Tasks"],
         responses=TaskOutPutSerializer,
     )
     def get(self, request, board_id):
@@ -82,7 +87,7 @@ class TaskDetailAPIView(ApiAuthMixin, APIView):
     class TaskDetailInputSerializer(serializers.Serializer):
         title = serializers.CharField(max_length=100)
         description = serializers.CharField(allow_blank=True)
-        board = serializers.IntegerField()
+        board_id = serializers.IntegerField()
         deadline = serializers.DateField(required=False)
 
         def validate_board(self, board_id):
@@ -92,7 +97,7 @@ class TaskDetailAPIView(ApiAuthMixin, APIView):
 
     class TaskDetailOutPutSerializer(serializers.ModelSerializer):
         user = serializers.SerializerMethodField("get_user")
-        board = serializers.SerializerMethodField("get_group")
+        board = serializers.SerializerMethodField("get_board")
 
         class Meta:
             model = Task
@@ -105,34 +110,41 @@ class TaskDetailAPIView(ApiAuthMixin, APIView):
             return task.board.name
 
     @extend_schema(
-        tags=['Tasks'],
+        tags=["Tasks"],
         responses=TaskDetailOutPutSerializer,
     )
-    def get(self, request, id):
-        task = task_detail(id=id)
+    def get(self, request, task_id):
+        task = task_detail(id=task_id)
         serializer = self.TaskDetailOutPutSerializer(task)
         return Response(serializer.data)
 
     @extend_schema(
-        tags=['Tasks'],
+        tags=["Tasks"],
         request=TaskDetailInputSerializer,
         responses=TaskDetailOutPutSerializer,
     )
-    def put(self, request, id):
-        task = task_detail(id=id)
-        serializer = self.TaskDetailInputSerializer(task, data=request.data)
+    def put(self, request, task_id):
+        task = task_detail(id=task_id)
+        serializer = self.TaskDetailInputSerializer(task, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
-        update_task(task=task, **serializer.validated_data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        board = Board.objects.filter(id=serializer.validated_data.get("board_id"))
+        if board:
+            permitted_users = board.first().permitted_users.all()
+            if permitted_users and request.user not in permitted_users:
+                return Response({"error": "You are not authorized to add tasks to this board."},
+                                status=status.HTTP_403_FORBIDDEN)
+        task = update_task(task=task, **serializer.validated_data)
+        serializer = self.TaskDetailOutPutSerializer(task)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @extend_schema(
-        tags=['Tasks'],
+        tags=["Tasks"],
         responses=None,
     )
-    def delete(self, request, id):
-        task = task_detail(id=id)
+    def delete(self, request, task_id):
+        task = task_detail(id=task_id)
         delete_task(task=task)
         return Response(
             {"message": "Task deleted successfully."},
-            status=status.HTTP_204_NO_CONTENT,
+            status=status.HTTP_200_OK,
         )
