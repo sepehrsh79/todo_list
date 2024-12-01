@@ -11,7 +11,7 @@ from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExampl
 from todo_list.api.pagination import LimitOffsetPagination, get_paginated_response_context
 
 from todo_list.todo.models import Task, Board
-from todo_list.todo.selectors.task import task_list, task_detail
+from todo_list.todo.selectors.task import task_list, task_detail, check_board_permission_to_add_task
 from todo_list.todo.services.task import create_task, update_task, delete_task
 from todo_list.api.mixins import ApiAuthMixin
 
@@ -51,11 +51,9 @@ class TaskAPIView(ApiAuthMixin, APIView):
         serializer = self.TaskInputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         board = get_object_or_404(Board, id=board_id)
-        if board and hasattr(board, "permitted_users"):
-            permitted_users = board.permitted_users.all()
-            if permitted_users and request.user not in permitted_users:
-                return Response({"error": "You are not authorized to add tasks to this board."},
-                                status=status.HTTP_403_FORBIDDEN)
+        if not check_board_permission_to_add_task(board=board, user=request.user):
+            return Response({"error": "You are not authorized to add tasks to this board."},
+                            status=status.HTTP_403_FORBIDDEN)
         task = create_task(
             title=serializer.validated_data.get("title"),
             description=serializer.validated_data.get("description"),
@@ -128,9 +126,8 @@ class TaskDetailAPIView(ApiAuthMixin, APIView):
         serializer = self.TaskDetailInputSerializer(task, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         board = Board.objects.filter(id=serializer.validated_data.get("board_id"))
-        if board:
-            permitted_users = board.first().permitted_users.all()
-            if permitted_users and request.user not in permitted_users:
+        if board.exists():
+            if not check_board_permission_to_add_task(board=board.first(), user=request.user):
                 return Response({"error": "You are not authorized to add tasks to this board."},
                                 status=status.HTTP_403_FORBIDDEN)
         task = update_task(task=task, **serializer.validated_data)
