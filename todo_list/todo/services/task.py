@@ -12,8 +12,8 @@ def create_task(*, title: str, description: str, board: Board, deadline: datetim
         raise ApplicationError(message="Database Error - " + str(ex))
 
 
-def update_task(*, task: Task, data) -> Task:
-    fields = ["title", "description", "board", "deadline"]
+def update_task(*, task: Task, **data) -> Task:
+    fields = ["title", "description", "board_id", "deadline"]
     try:
         task, has_updated = model_update(instance=task, fields=fields, data=data)
     except Exception as ex:

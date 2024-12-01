@@ -86,7 +86,7 @@ class BoardDetailAPIView(ApiAuthMixin, APIView):
     class BoardDetailInputSerializer(serializers.Serializer):
         name = serializers.CharField(max_length=100)
         description = serializers.CharField(allow_blank=True)
-        group = serializers.IntegerField()
+        group_id = serializers.IntegerField()
         permitted_users = serializers.ListField(
             child=serializers.IntegerField(),
             allow_empty=True
@@ -127,7 +127,7 @@ class BoardDetailAPIView(ApiAuthMixin, APIView):
     )
     def put(self, request, board_id):
         board = board_detail(id=board_id)
-        serializer = self.BoardDetailInputSerializer(board, data=request.data)
+        serializer = self.BoardDetailInputSerializer(board, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         board = update_board(board=board, **serializer.validated_data)
         serializer = self.BoardDetailOutPutSerializer(board)

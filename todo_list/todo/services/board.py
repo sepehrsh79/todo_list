@@ -22,7 +22,7 @@ def create_board(*, name: str, description: str, group: Group, permitted_users: 
 
 
 def update_board(*, board: Board, **data) -> Board:
-    fields = ["name", "description", "board"]
+    fields = ["name", "description", "group_id"]
     permitted_users = data.pop('permitted_users')
     try:
         board, has_updated = model_update(instance=board, fields=fields, data=data)
