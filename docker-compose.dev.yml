@@ -10,7 +10,7 @@ services:
     environment:
       - POSTGRES_DB=todo_list
       - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=mradmin1379
+      - POSTGRES_PASSWORD=postgres
     volumes:
       - postgres-data:/var/lib/postgresql/data/
 
