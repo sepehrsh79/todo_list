@@ -1,4 +1,3 @@
-from drf_spectacular.types import OpenApiTypes
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
@@ -6,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework import serializers
 from rest_framework import status
 
-from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExample
+from drf_spectacular.utils import extend_schema
 
 from todo_list.api.pagination import LimitOffsetPagination, get_paginated_response_context
 
@@ -61,7 +60,8 @@ class TaskAPIView(ApiAuthMixin, APIView):
             board=board,
             user=request.user,
         )
-        return Response(self.TaskOutPutSerializer(task, context={"request": request}).data)
+        return Response(self.TaskOutPutSerializer(task, context={"request": request}).data,
+                        status=status.HTTP_201_CREATED)
 
     @extend_schema(
         tags=["Tasks"],

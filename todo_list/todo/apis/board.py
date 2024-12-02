@@ -62,7 +62,8 @@ class BoardAPIView(ApiAuthMixin, APIView):
             group=group,
             user=request.user,
         )
-        return Response(self.BoardOutPutSerializer(board, context={"request": request}).data)
+        return Response(self.BoardOutPutSerializer(board, context={"request": request}).data,
+                        status=status.HTTP_201_CREATED)
 
     @extend_schema(
         tags=['Boards'],

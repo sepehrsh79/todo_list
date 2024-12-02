@@ -45,7 +45,8 @@ class GroupAPIView(ApiAuthMixin, APIView):
             name=serializer.validated_data.get("name"),
             user=request.user,
         )
-        return Response(self.GroupOutPutSerializer(group, context={"request": request}).data)
+        return Response(self.GroupOutPutSerializer(group, context={"request": request}).data,
+                        status=status.HTTP_201_CREATED)
 
     @extend_schema(
         tags=['Groups'],
