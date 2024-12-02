@@ -9,7 +9,7 @@ cd todo_list
 
 2- SetUp venv
 ```
-virtualenv -p python3.10 venv
+virtualenv -p python3.12 venv
 source venv/bin/activate
 ```
 
