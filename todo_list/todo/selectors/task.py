@@ -16,6 +16,6 @@ def task_detail(*, id: int) -> Task:
 def check_board_permission_to_add_task(board: Board, user: BaseUser):
     if board and hasattr(board, "permitted_users"):
         permitted_users = board.permitted_users.all()
-        if user != board.user and (permitted_users and user not in permitted_users):
+        if user != board.user or (permitted_users and user not in permitted_users):
             return False
     return True
