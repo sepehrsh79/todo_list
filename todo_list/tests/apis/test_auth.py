@@ -7,9 +7,9 @@ import json
 
 
 @pytest.mark.django_db
-def test_unauth_example_api(user1, example1):
+def test_unauth_group_api():
     client = Client()
-    url_ = reverse("api:example:example")
+    url_ = reverse("api:todo:group")
 
     response = client.post(url_, content_type="application/json")
 
@@ -17,8 +17,8 @@ def test_unauth_example_api(user1, example1):
 
 
 @pytest.mark.django_db
-def test_auth_api(api_client, user1, example1):
-    url_ = reverse("api:example:example")
+def test_auth_api(api_client):
+    url_ = reverse("api:todo:group")
 
     response = api_client.get(url_, content_type="application/json")
 
@@ -26,13 +26,13 @@ def test_auth_api(api_client, user1, example1):
 
 
 @pytest.mark.django_db
-def test_login(user1, example1):
+def test_login():
     user = BaseUser.objects.create_user(
         email="js@js.com", password="js.sj"
     )
 
     client = APIClient()
-    url_ = reverse("api:auth:jwt:login")
+    url_ = reverse("api:auth:login")
     body = {"email": user.email, "password": "js.sj"}
     response = client.post(url_, json.dumps(body), content_type="application/json")
     auth = json.loads(response.content)
