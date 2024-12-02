@@ -30,6 +30,7 @@ class Task(BaseModel):
     description = models.TextField(blank=True, null=True)
     completed = models.BooleanField(default=False)
     deadline = models.DateField(blank=True, null=True)
+    is_notified = models.BooleanField(default=False)
 
     def __str__(self):
         return self.title
